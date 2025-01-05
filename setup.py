@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'signal_gen = control_evaluate.signal_gen:main'
         ],
     },
 )
