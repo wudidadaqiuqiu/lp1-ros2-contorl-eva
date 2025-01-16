@@ -2,7 +2,7 @@ import struct
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import UInt8MultiArray, Float32
+from std_msgs.msg import UInt8MultiArray, Float32, Float32MultiArray
 from sklearn.linear_model import SGDRegressor
 
 # model = SGDRegressor(
@@ -39,7 +39,7 @@ class PowerRegressNode(Node):
         self.msg2 = Float32()
         self.msg_omegae = Float32()
         self.msg_current = Float32()
-
+        self.msg_all = Float32MultiArray()
         # 创建订阅者和发布者
         self.subscription_omega = self.create_subscription(
             UInt8MultiArray,
@@ -51,6 +51,7 @@ class PowerRegressNode(Node):
         self.pub2 = self.create_publisher(Float32, '/power_real', 10)
         self.pub_omega = self.create_publisher(Float32, '/motor_omega', 10)
         self.pub_current = self.create_publisher(Float32, '/motor_current', 10)
+        self.pub_all = self.create_publisher(Float32MultiArray, '/data_all', 10)
 
         self.get_logger().info('Power Regree Node initialized')
 
@@ -96,7 +97,9 @@ class PowerRegressNode(Node):
         self.msg_current.data = cur
         self.pub_current.publish(self.msg_current)
 
-
+        self.msg_all.data = [power, omega, cur]
+        self.pub_all.publish(self.msg_all)
+        
         # P_new = np.array([power])
         self.X_accumulated.append([X1_new, X2_new])
         self.P_accumulated.append(power)

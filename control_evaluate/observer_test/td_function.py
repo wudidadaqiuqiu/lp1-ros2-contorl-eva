@@ -21,6 +21,7 @@ def fst(x1_delta, x2, r, h0):
     a1 = sqrt(d * (d + 8 * fabs(y)))
     a2 = a0 + fsgn(y) * (a1 - d) / 2
     a = (a0 + y) * fsg(y, d) + a2 * (1 - fsg(y, d))
+    return (-r * (a / d) * fsg(a, d) - r * fsgn(a) * (1 - fsg(a, d)))
 
 @dataclass
 class TdFunction:
@@ -28,12 +29,14 @@ class TdFunction:
     h : float
     h0 : float
 
-    x: float
-    y: float
-    z: float
+    v1: float = 0.0
+    v2: float = 0.0
 
     def update(self, ref):
         last_v1 = self.v1
         last_v2 = self.v2
         self.v1 = last_v1 + self.h * last_v2
-        self.v2 = last_v2 + self.h * fst(last_v1 - self.ref, last_v2, self.r, self.h0)
+        self.v2 = last_v2 + self.h * fst(last_v1 - ref, last_v2, self.r, self.h0)
+    
+    def get_diff(self):
+        return self.v2
