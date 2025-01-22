@@ -97,7 +97,7 @@ class PowerRegressNode(Node):
         self.msg_current.data = cur
         self.pub_current.publish(self.msg_current)
 
-        self.msg_all.data = [power, omega, cur]
+        self.msg_all.data = [power, omega, cur, spe]
         self.pub_all.publish(self.msg_all)
         
         # P_new = np.array([power])

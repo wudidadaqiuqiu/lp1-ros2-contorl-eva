@@ -3,15 +3,17 @@ import struct
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import UInt8MultiArray, Float32
+from std_msgs.msg import UInt8MultiArray, Float32, Float32MultiArray
 
 class PowerTryNode(Node):
     def __init__(self):
         super().__init__('power_try_node')
         self.X_accumulated = []
         self.P_accumulated = []
+        self.omega_accumulated = []
+        self.current_accumulated = []
         # self.coff = np.array([0.01723616, 0.32468812])
-        self.coff = np.array([0.00455999, 0.01510337, 0.10810623])
+        self.coff = np.array([0.00479301, 0.01457816, 0.08997533])
         self.intercept = np.array([1.04431114])
         
         self.msgii = Float32()
@@ -40,6 +42,12 @@ class PowerTryNode(Node):
             self.current_callback,
             10
         )
+        self.sub_all = self.create_subscription(
+            Float32MultiArray,
+            '/data_all',  # 订阅主题名
+            self.all_data_callback,
+            10
+        )
         self.publisher_ii = self.create_publisher(Float32, '/power_ii', 10)
         self.publisher_oi = self.create_publisher(Float32, '/power_oi', 10)
         self.pub_es_power = self.create_publisher(Float32, '/es_power', 10)
@@ -50,16 +58,24 @@ class PowerTryNode(Node):
     def omega_callback(self, msg: Float32):
         self.omega = msg.data
 
+    def all_data_callback(self, msg: Float32MultiArray):
+        power, omega, current, spe = msg.data
+        self.X_accumulated.append([np.sign(omega * current) * omega * current, 
+                           omega * current, current * current])
+        self.omega_accumulated.append(omega)
+        self.current_accumulated.append(current)
+        self.P_accumulated.append(power)
+
     def current_callback(self, msg: Float32):
         self.current = msg.data
-        self.msgoi.data = self.omega * self.current
+        self.msgoi.data = self.omega * self.current * self.coff[1] + np.sign(self.omega * self.current) * self.omega * self.current * self.coff[0]
         self.publisher_oi.publish(self.msgoi)
-        self.msgii.data = self.current * self.current
+        self.msgii.data = self.current * self.current * self.coff[2]
         self.publisher_ii.publish(self.msgii)
 
-        self.X_accumulated.append([np.sign(self.omega * self.current) * self.omega * self.current, 
-                           self.omega * self.current, self.current * self.current])
-        self.P_accumulated.append(self.power)
+        # self.X_accumulated.append([np.sign(self.omega * self.current) * self.omega * self.current, 
+        #                    self.omega * self.current, self.current * self.current])
+        # self.P_accumulated.append(self.power)
 
         X_new = np.array([np.sign(self.omega * self.current) * self.omega * self.current, 
                           self.omega * self.current, self.current * self.current])
@@ -73,6 +89,9 @@ class PowerTryNode(Node):
         """ 保存数据到文件 """
         np.save(os.path.dirname(__file__) +'/../data/X_accumulated.npy', np.array(self.X_accumulated))
         np.save(os.path.dirname(__file__) +'/../data/P_accumulated.npy', np.array(self.P_accumulated))
+        np.save(os.path.dirname(__file__) +'/../data/omega_accumulated.npy', np.array(self.omega_accumulated))
+        np.save(os.path.dirname(__file__) +'/../data/current_accumulated.npy', np.array(self.current_accumulated))
+
         self.get_logger().info("Data saved successfully!")
 
 
@@ -85,7 +104,7 @@ def main(args=None):
     except KeyboardInterrupt:
         # 保存数据
         # print(__file__)
-        # node.save_data()
+        node.save_data()
         pass
     finally:
         node.destroy_node()
