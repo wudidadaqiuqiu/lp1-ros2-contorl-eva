@@ -13,9 +13,16 @@ class PowerTryNode(Node):
         self.omega_accumulated = []
         self.current_accumulated = []
         # self.coff = np.array([0.01723616, 0.32468812])
-        self.coff = np.array([0.00479301, 0.01457816, 0.08997533])
-        self.intercept = np.array([1.04431114])
-        
+        self.coff = np.array([0.02143351, 0.11251341, 0.18849983])
+        self.intercept = np.array([1.9049197])
+
+        # self.coff = np.array([0.00969981, 0.02150255, 0.15329343])
+        # self.intercept = np.array([1.01705622])
+        # self.coff = np.array([0.00570055, 0.01894968, 0.03799306])
+        # self.intercept = np.array([1.2315984])
+        # self.coff = np.array([0.01006942, 0.02662769, 0.64796416])
+        # self.intercept = np.array([1.4096606])
+
         self.msgii = Float32()
         self.msgoi = Float32()
         self.msg_power = Float32()
@@ -104,7 +111,7 @@ def main(args=None):
     except KeyboardInterrupt:
         # 保存数据
         # print(__file__)
-        node.save_data()
+        # node.save_data()
         pass
     finally:
         node.destroy_node()
